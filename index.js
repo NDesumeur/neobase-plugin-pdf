@@ -11,6 +11,7 @@ export default async function (ctx) {
   const $ = id => id === "pdfApp" ? view : (view.querySelector('#' + id) || document.getElementById(id));  // les identifiants de ta vue d'abord, puis ceux de la page (fenêtres, menus)
   const doc = async n => { try { return await folder.read(n); } catch { return null; } };
   const __icon = () => ctx.icon;  // l'icône de ce plugin
+  const __asset = async (rel, type) => URL.createObjectURL(new Blob([Uint8Array.from(atob(await neo.pluginFileRead(ctx.id, rel)), c => c.charCodeAt(0))], { type }));  // un fichier livré avec le plugin
   const __picks = {  };
   const __storeGet = async n => {
     let d = await doc(n);
@@ -30,8 +31,8 @@ const pdDoc = () => pdStore.docs[pd.hash] ??= {name: pd.name, marks: [], notes: 
 async function pdOpenPath(p, url) {
   try {
     const f = await neo.pdfRead(p);
-    pdLib ??= await import(new URL('vendor/pdfjs/pdf.min.mjs', document.baseURI).href);
-    pdLib.GlobalWorkerOptions.workerSrc = new URL('vendor/pdfjs/pdf.worker.min.mjs', location.href).href;
+    pdLib ??= await import(await __asset('vendor/pdf.min.mjs', 'text/javascript'));
+    pdLib.GlobalWorkerOptions.workerSrc = await __asset('vendor/pdf.worker.min.mjs', 'text/javascript');
     const doc = await pdLib.getDocument({data: f.data, isEvalSupported: false}).promise;  // no eval: a PDF's fonts can't run code
     await pdData();
     pd?.doc?.destroy();
