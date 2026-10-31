@@ -180,5 +180,6 @@ neo.onPdfOpen(d => { newTab('neodyme:pdf'); pdOpenPath(d.path, d.url); });
   return t;
 }; }  // (non indenté : les textes sur plusieurs lignes restent exactement les tiens)
   // ---- fin ----
+  window.pdOpenPath = pdOpenPath; window.pdTextAll = pdTextAll;  // ce que NeoBase (Fichiers, Visionneuse, recherche dans la page) peut demander à ce plugin
   ctx.onOpen(() => { pdOpen(); });
 }
