@@ -2,11 +2,34 @@
 // Ses données sont dans le dossier du plugin, que NeoBase sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoBase.
 // Elle demande l'accès complet pour utiliser les outils d'interface de NeoBase. NeoBase ne l'ouvre que si elle est signée.
 const HTML = "<div class=\"appWrap pdWrap\">\n      <div class=\"agHead\"><span class=\"label\">NeoPDF</span><span class=\"hint\" id=\"pdInfo\"></span><div class=\"agNav\"><button class=\"btn main px\" id=\"pdOpenBtn\">OUVRIR UN PDF</button></div></div>\n      <div id=\"pdBar\" class=\"pdBar\"><button class=\"btn px\" id=\"pdPrev\" title=\"Page précédente\">◀</button><input class=\"f\" id=\"pdPageNum\" type=\"number\" min=\"1\" value=\"1\"><span class=\"hint\" id=\"pdTotal\"></span><button class=\"btn px\" id=\"pdNext\" title=\"Page suivante\">▶</button>\n        <button class=\"btn px\" id=\"pdZoomOut\" title=\"Dézoomer\">−</button><span class=\"hint\" id=\"pdZoom\"></span><button class=\"btn px\" id=\"pdZoomIn\" title=\"Zoomer\">+</button><button class=\"btn px\" id=\"pdFit\" title=\"Toute la largeur\">LARGEUR</button>\n        <span id=\"pdTools\" class=\"pdTools\"></span><button class=\"btn px\" id=\"pdUndo\" title=\"Annuler le dernier tracé ou la dernière note\">ANNULER</button>\n        <button class=\"btn px\" id=\"pdCopy\" title=\"Une copie du PDF tel quel\">ENREGISTRER LE PDF</button><button class=\"btn main px\" id=\"pdExport\" title=\"Une copie du PDF avec tes tracés et tes notes\">ENREGISTRER ANNOTÉ</button></div>\n      <div id=\"pdRecentBox\" class=\"sysCard px\"></div>\n      <div id=\"pdPages\" class=\"pdPages\"></div>\n    </div>";
+/*CSS-MOVED*/ const CSS = `html.pxc :is(input:not([type=checkbox]):not([type=range]):not([type=color]),textarea,[contenteditable=""],[contenteditable=true],.dcPage,.textLayer span){cursor:var(--ct,text) !important}
+.appWrap.pdWrap{max-width:none;margin:0;height:100%;overflow:clip;gap:6px;padding:8px 10px}
+.pdBar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pdBar #pdPageNum{width:70px}
+.pdTools{display:flex;gap:4px;align-items:center;margin:0 8px}
+.pdColor{width:22px;height:22px;border:0;box-shadow:inset 0 0 0 2px #0006;cursor:var(--cp,pointer)}
+.pdColor.on{box-shadow:0 0 0 3px #fff}
+.pdPages{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px;background:#05010b;box-shadow:0 0 0 3px var(--line2)}
+.pdPages:empty{display:none}
+.pdPage{position:relative;flex:none;background:#fff;box-shadow:0 4px 0 #0008}
+.pdPage canvas{position:absolute;inset:0;width:100%;height:100%}
+.pdPages[data-tool=scroll] .pdInk{pointer-events:none}
+.pdPages:not([data-tool=scroll]) .pdInk{cursor:crosshair;touch-action:none}
+.pdNum{position:absolute;right:-30px;bottom:0;color:var(--muted);font:11px var(--title)}
+.pdNotes{position:absolute;inset:0;pointer-events:none;z-index:3}
+.textLayer{position:absolute;text-align:initial;inset:0;overflow:clip;opacity:1;line-height:1;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2;user-select:text}
+.pdPages:not([data-tool=scroll]) .textLayer{pointer-events:none}
+.textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;transform-origin:0% 0%}
+.textLayer span.markedContent{top:0;height:0}
+.textLayer ::selection{background:rgba(180,76,255,.35)}
+.pdNote{position:absolute;max-width:45%;padding:6px 10px;background:var(--nc);color:#130a20;font:14px var(--text);white-space:pre-wrap;pointer-events:auto;cursor:var(--cp,pointer);box-shadow:2px 2px 0 #0006}
+`;  // le style de ce plugin (il utilise les variables du thème de NeoBase)
 export default async function (ctx) {
   const view = ctx.view;
   if (!ctx.host) { view.textContent = "Ce plugin doit être approuvé par NeoBase pour s'ouvrir."; return; }
   const host = ctx.host, { el, toast, sfx, ask, pixIcon, PIX, WX } = host;
   const folder = ctx.folder, legacy = ctx.legacy || {};
+  ctx.host.addStyle(CSS);
   view.innerHTML = HTML;
   const $ = id => id === "pdfApp" ? view : (view.querySelector('#' + id) || document.getElementById(id));  // les identifiants de ta vue d'abord, puis ceux de la page (fenêtres, menus)
   const doc = async n => { try { return await folder.read(n); } catch { return null; } };
