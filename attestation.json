@@ -1,9 +1,0 @@
-{
-  "pluginId": "neobase.pdf",
-  "repo": "NDesumeur/neobase-plugin-pdf",
-  "version": "1.0.1",
-  "sha256": "f1cd697f972fdc762c84ee9333e3526248cf4a2b5fa8bcb9db2f7ba610257be6",
-  "approvedAt": "2026-10-31T17:51:20.975Z",
-  "neobase": ">=4.0.0",
-  "signature": "0JlFJLdoBJuGMnHCo3epDQnqI803RelUHttpQ23Gfj30Pocb4fN8oiGFLyhOP8deqBveiJBeT8U71DzZz5SsAg=="
-}
