@@ -1,6 +1,6 @@
 // NeoPDF : ton appli d'origine (HTML et code inchangés), livrée en plugin.
 // Ses données sont dans le dossier du plugin, que NeoBase sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoBase.
-// Elle demande l'accès complet pour utiliser les outils d'interface de NeoBase. NeoBase ne l'ouvre que si elle est signée.
+// Elle tourne dans le bac à sable de NeoBase, avec ses outils d'interface (ctx.host) et seulement les autorisations de son plugin.json.
 const HTML = "<div class=\"appWrap pdWrap\">\n      <div class=\"agHead\"><span class=\"label\">NeoPDF</span><span class=\"hint\" id=\"pdInfo\"></span><div class=\"agNav\"><button class=\"btn main px\" id=\"pdOpenBtn\">OUVRIR UN PDF</button></div></div>\n      <div id=\"pdBar\" class=\"pdBar\"><button class=\"btn px\" id=\"pdPrev\" title=\"Page précédente\">◀</button><input class=\"f\" id=\"pdPageNum\" type=\"number\" min=\"1\" value=\"1\"><span class=\"hint\" id=\"pdTotal\"></span><button class=\"btn px\" id=\"pdNext\" title=\"Page suivante\">▶</button>\n        <button class=\"btn px\" id=\"pdZoomOut\" title=\"Dézoomer\">−</button><span class=\"hint\" id=\"pdZoom\"></span><button class=\"btn px\" id=\"pdZoomIn\" title=\"Zoomer\">+</button><button class=\"btn px\" id=\"pdFit\" title=\"Toute la largeur\">LARGEUR</button>\n        <span id=\"pdTools\" class=\"pdTools\"></span><button class=\"btn px\" id=\"pdUndo\" title=\"Annuler le dernier tracé ou la dernière note\">ANNULER</button>\n        <button class=\"btn px\" id=\"pdCopy\" title=\"Une copie du PDF tel quel\">ENREGISTRER LE PDF</button><button class=\"btn main px\" id=\"pdExport\" title=\"Une copie du PDF avec tes tracés et tes notes\">ENREGISTRER ANNOTÉ</button></div>\n      <div id=\"pdRecentBox\" class=\"sysCard px\"></div>\n      <div id=\"pdPages\" class=\"pdPages\"></div>\n    </div>";
 /*CSS-MOVED*/ const CSS = `html.pxc :is(input:not([type=checkbox]):not([type=range]):not([type=color]),textarea,[contenteditable=""],[contenteditable=true],.dcPage,.textLayer span){cursor:var(--ct,text) !important}
 .appWrap.pdWrap{max-width:none;margin:0;height:100%;overflow:clip;gap:6px;padding:8px 10px}
@@ -134,7 +134,7 @@ function pdRecent() {
   box.replaceChildren(el('span', 'label', 'PDF récents'), ...(list.length ? list.map(([h, d]) => {
     const r = el('div', 'txRow vtRow'), n = el('div', 'tn'), acts = el('div', 'dlInfo'), b = el('button', '', d.path ? 'OUVRIR' : 'SUR LE SITE');
     n.append(d.name, el('small', '', (d.count ? d.count + ' pages · ' : '') + d.marks.length + ' tracés, ' + d.notes.length + ' notes · ' + new Date(d.at).toLocaleDateString('fr-FR')));
-    b.onclick = () => d.path ? pdOpenPath(d.path) : d.url && newTab(d.url);
+    b.onclick = () => d.path ? pdOpenPath(d.path) : d.url && host.newTab(d.url);
     acts.append(b); r.append(n, acts); return r;
   }) : [el('div', 'hint', 'Aucun PDF ouvert pour l\'instant.')]));
 }
@@ -190,19 +190,11 @@ $('pdExport').onclick = async () => {
   const out = await neo.pdfExport({src: pd.path, marks, name: pd.name}).catch(e => toast(e.message, true)); if (out) toast('PDF annoté enregistré : ' + out);
 };
 $('pdfApp').ondragover = e => e.preventDefault();
-$('pdfApp').ondrop = e => { e.preventDefault(); const f = [...e.dataTransfer.files].find(f => /\.pdf$/i.test(f.name)); if (f) pdOpenPath(neo.pathOf(f)); };
-neo.onPdfOpen(d => { newTab('neodyme:pdf'); pdOpenPath(d.path, d.url); });
-// a website tab that shows a PDF (Chromium's viewer): NeoPDF takes it, and the tab goes back to the page it came from (or closes)
-{ const real = newTab; newTab = function () {
-  const t = real.apply(this, arguments);
-  if (t && !t.app) t.v.addEventListener('did-finish-load', () => t.v.executeJavaScript('document.contentType').then(ct => {
-    if (ct !== 'application/pdf') return;
-    const url = t.v.getURL(); neo.pdfFetch({wcId: t.v.getWebContentsId(), url});
-    if (t.v.canGoBack()) t.v.goBack(); else host.closeTab(t);
-  }, () => {}));
-  return t;
-}; }  // (non indenté : les textes sur plusieurs lignes restent exactement les tiens)
+$('pdfApp').ondrop = e => { e.preventDefault(); const f = [...e.dataTransfer.files].find(f => /\.pdf$/i.test(f.name)); if (f) neo.pathOf(f).then(p => pdOpenPath(p)); };
+neo.onPdfOpen(d => { host.newTab('neodyme:pdf');  // un PDF du web, pris par NeoBase dans un onglet
+  pdOpenPath(d.path, d.url); });
   // ---- fin ----
-  window.pdOpenPath = pdOpenPath; window.pdTextAll = pdTextAll;  // ce que NeoBase (Fichiers, Visionneuse, recherche dans la page) peut demander à ce plugin
+  ctx.onFiles(files => files[0] && pdOpenPath(files[0]));  // « ouvrir avec » : Fichiers, Visionneuse
+  ctx.commands.on('find', () => pdTextAll());  // la recherche dans la page : le texte de chaque page d'abord
   ctx.onOpen(() => { pdOpen(); });
 }
