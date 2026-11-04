@@ -1,6 +1,6 @@
 // NeoPDF : ton appli d'origine (HTML et code inchangés), livrée en plugin.
-// Ses données sont dans le dossier du plugin, que NeoBase sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoBase.
-// Elle tourne dans le bac à sable de NeoBase, avec ses outils d'interface (ctx.host) et seulement les autorisations de son plugin.json.
+// Ses données sont dans le dossier du plugin, que NeoDex sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoDex.
+// Elle tourne dans le bac à sable de NeoDex, avec ses outils d'interface (ctx.host) et seulement les autorisations de son plugin.json.
 const HTML = "<div class=\"appWrap pdWrap\">\n      <div class=\"agHead\"><span class=\"label\">NeoPDF</span><span class=\"hint\" id=\"pdInfo\"></span><div class=\"agNav\"><button class=\"btn main px\" id=\"pdOpenBtn\">OUVRIR UN PDF</button></div></div>\n      <div id=\"pdBar\" class=\"pdBar\"><button class=\"btn px\" id=\"pdPrev\" title=\"Page précédente\">◀</button><input class=\"f\" id=\"pdPageNum\" type=\"number\" min=\"1\" value=\"1\"><span class=\"hint\" id=\"pdTotal\"></span><button class=\"btn px\" id=\"pdNext\" title=\"Page suivante\">▶</button>\n        <button class=\"btn px\" id=\"pdZoomOut\" title=\"Dézoomer\">−</button><span class=\"hint\" id=\"pdZoom\"></span><button class=\"btn px\" id=\"pdZoomIn\" title=\"Zoomer\">+</button><button class=\"btn px\" id=\"pdFit\" title=\"Toute la largeur\">LARGEUR</button>\n        <span id=\"pdTools\" class=\"pdTools\"></span><button class=\"btn px\" id=\"pdUndo\" title=\"Annuler le dernier tracé ou la dernière note\">ANNULER</button>\n        <button class=\"btn px\" id=\"pdCopy\" title=\"Une copie du PDF tel quel\">ENREGISTRER LE PDF</button><button class=\"btn main px\" id=\"pdExport\" title=\"Une copie du PDF avec tes tracés et tes notes\">ENREGISTRER ANNOTÉ</button></div>\n      <div id=\"pdRecentBox\" class=\"sysCard px\"></div>\n      <div id=\"pdPages\" class=\"pdPages\"></div>\n    </div>";
 /*CSS-MOVED*/ const CSS = `html.pxc :is(input:not([type=checkbox]):not([type=range]):not([type=color]),textarea,[contenteditable=""],[contenteditable=true],.dcPage,.textLayer span){cursor:var(--ct,text) !important}
 .appWrap.pdWrap{max-width:none;margin:0;height:100%;overflow:clip;gap:6px;padding:8px 10px}
@@ -23,10 +23,10 @@ const HTML = "<div class=\"appWrap pdWrap\">\n      <div class=\"agHead\"><span 
 .textLayer span.markedContent{top:0;height:0}
 .textLayer ::selection{background:rgba(180,76,255,.35)}
 .pdNote{position:absolute;max-width:45%;padding:6px 10px;background:var(--nc);color:#130a20;font:14px var(--text);white-space:pre-wrap;pointer-events:auto;cursor:var(--cp,pointer);box-shadow:2px 2px 0 #0006}
-`;  // le style de ce plugin (il utilise les variables du thème de NeoBase)
+`;  // le style de ce plugin (il utilise les variables du thème de NeoDex)
 export default async function (ctx) {
   const view = ctx.view;
-  if (!ctx.host) { view.textContent = "Ce plugin doit être approuvé par NeoBase pour s'ouvrir."; return; }
+  if (!ctx.host) { view.textContent = "Ce plugin doit être approuvé par NeoDex pour s'ouvrir."; return; }
   const host = ctx.host, { el, toast, sfx, ask, pixIcon, PIX, WX } = host;
   const folder = ctx.folder, legacy = ctx.legacy || {};
   ctx.host.addStyle(CSS);
@@ -191,7 +191,7 @@ $('pdExport').onclick = async () => {
 };
 $('pdfApp').ondragover = e => e.preventDefault();
 $('pdfApp').ondrop = e => { e.preventDefault(); const f = [...e.dataTransfer.files].find(f => /\.pdf$/i.test(f.name)); if (f) neo.pathOf(f).then(p => pdOpenPath(p)); };
-neo.onPdfOpen(d => { host.newTab('neodyme:pdf');  // un PDF du web, pris par NeoBase dans un onglet
+neo.onPdfOpen(d => { host.newTab('neodex:pdf');  // un PDF du web, pris par NeoDex dans un onglet
   pdOpenPath(d.path, d.url); });
   // ---- fin ----
   ctx.onFiles(files => files[0] && pdOpenPath(files[0]));  // « ouvrir avec » : Fichiers, Visionneuse
